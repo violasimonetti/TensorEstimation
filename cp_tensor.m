@@ -1,4 +1,4 @@
-function [X, Y, A] = cp_tensor(R, d, p, xi, lambda, SNRdB, rngSeed)
+function [X, Y, A] = cp_tensor(R, d, p, xi, lambda, SNRdB, rngSeed, sigma)
 % This function computes a CP-rank tensor plus noise.
 %
 % Inputs:
@@ -8,6 +8,7 @@ function [X, Y, A] = cp_tensor(R, d, p, xi, lambda, SNRdB, rngSeed)
 % - lambda: (Rx1) scaling factors
 % - SNRdB: (scalar) signal-to-noise ratio in db
 % - rngSeed: (scalar) seed for reprudicibility
+% - sigma: (scalar) noise level (put 0 if you prefer to use SNRdB)
 %
 % Ouputs:
 % - X: (p(1) x ... x p(d)) CP-rank tensor
@@ -29,8 +30,14 @@ function [X, Y, A] = cp_tensor(R, d, p, xi, lambda, SNRdB, rngSeed)
     % Add noise
     Xfull = full(X);
     N = randn(size(Xfull)); % Random tensor (Gaussian i.i.d. entries)
-    sigma = norm(Xfull(:)) / norm(N(:)) * 10^(-SNRdB/20);
-    Y = Xfull + sigma*N;
+
+    if sigma == 0
+        sigma = norm(Xfull(:)) / norm(N(:)) * 10^(-SNRdB/20);
+        Y = Xfull + sigma*N;
+    else
+        Y = Xfull + sigma*N;
+
+    end
 
     % Output tensor
     Y = tensor(Y);
