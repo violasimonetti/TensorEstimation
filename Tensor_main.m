@@ -1,10 +1,9 @@
 %% MAIN
 % This code checks convergence of CP-ALS decomposition via simulations
-
 clc;
 clear;
 
-ttroot = 'C:\Users\violi\OneDrive\Desktop\Tensor project\tensor_toolbox-v3.8';
+ttroot = 'C:\Users\violi\OneDrive\Desktop\PhD courses\Second year\TENSOR\tensor_toolbox-v3.8';
 addpath(ttroot);
 
 % Paramaters
@@ -14,12 +13,13 @@ d = 3;
 p = [15 12 10]; % d x 1
 lambda = [1 2 3]; % R x 1
 
-M = 1; % Number of simulations
-N = 10;
-S = 10;
-maxit = 300; % Maximum number of iterations
-SNRdB = linspace(10,40, S);
-xi = linspace(0, 0.9, N);
+M = 50; % Number of simulations
+maxit = 100; % Maximum number of iterations
+SNRdB = linspace(10,40, 10);
+sigma = [10^(-9), 10^(-7), 10^(-5), 10^(-4), 10^(-2), 1];
+xi = linspace(0, 0.9, 10);
+N = size(xi,2);
+S = size(sigma, 2);
 
 % Initialize vectors
 iters = zeros(N, S);
@@ -34,8 +34,8 @@ for n = 1:d
 end
 
 % For parallel computing
-delete(gcp('nocreate'));
-parpool('local', 8);
+% delete(gcp('nocreate'));
+% parpool('local', 8);
 
 for s = 1:S
 
@@ -44,7 +44,7 @@ for s = 1:S
         parfor j = 1:M
             seed = rngSeed + j; % We generate different tensors for each simulation
 
-            [X, Y, A] = cp_tensor(R, d, p, xi(i), lambda, SNRdB(s), seed); % Generate tensor
+            [X, Y, A] = cp_tensor(R, d, p, xi(i), lambda, SNRdB(s), seed, sigma(s)); % Generate tensor
 
             eps_target = 0.05; % Target for error metric
 
@@ -74,31 +74,34 @@ for s = 1:S
 
 end
 
-%% Figures
+%% Figures with sigma
 % Against xi
 figure;
-plot(xi, iters(:,1), 'LineWidth', 1.5); hold on % SNRdB = 10
-plot(xi, iters(:, 4), 'LineWidth', 1.5); hold on % SNRdB = 20
-plot(xi, iters(:, 7), 'LineWidth', 1.5); hold on % SNRdB = 30
-plot(xi, iters(:, 10), 'LineWidth', 1.5); % SNRdB = 40
+plot(xi, iters(:,1), 'LineWidth', 1.5); hold on % sigma = 10^(-9)
+plot(xi, iters(:, 4), 'LineWidth', 1.5); hold on % sigma = 10^(-4)
+plot(xi, iters(:, 6), 'LineWidth', 1.5); % sigma = 1
 xlabel('\xi');
 ylabel('$\hat{\pi}$','Interpreter','latex');
 ylim([0 1.0])
-legend('SNRdB = 10', 'SNRdB = 20', 'SNRdB = 30', 'SNRdB = 40');
-title('Iterations vs \xi for different SNRdB values. R = 5 d = 5');
+legend('\sigma = 10^{(-9)}', '\sigma = 10^{(-4)}', '\sigma = 1');
+title('Iterations vs \xi for different \sigma values. R = 3 d = 3');
 grid on;
 
-% Against SNR
+exportgraphics(gcf, fullfile(pwd, 'Immagini_3', 'xi_R3_d3.jpg'));
+
+% Against sigma
 figure;
-plot(SNRdB, iters(2, :), 'LineWidth', 1.5); hold on % xi = 0.10
-plot(SNRdB, iters(5, :), 'LineWidth', 1.5); hold on % xi = 0.40
-plot(SNRdB, iters(8, :), 'LineWidth', 1.5); hold on % xi = 0.70
-plot(SNRdB, iters(10, :), 'LineWidth', 1.5); % xi = 0.90
-xlabel('SNRdB');
+plot(sigma, iters(2, :), 'LineWidth', 1.5); hold on % xi = 0.10
+plot(sigma, iters(8, :), 'LineWidth', 1.5); hold on % xi = 0.70
+plot(sigma, iters(10, :), 'LineWidth', 1.5); % xi = 0.90
+xlabel('\sigma');
 ylabel('$\hat{\pi}$','Interpreter','latex');
 ylim([0 1.0])
-legend('\xi = 0.10', '\xi = 0.40', '\xi = 0.70', '\xi = 0.90');
-title('Iterations vs SNR for different \xi values. R = 5 d = 5');
+legend('\xi = 0.10', '\xi = 0.70', '\xi = 0.90');
+title('Iterations vs \sigma for different \xi values. R = 3 d = 3');
 grid on;
+
+exportgraphics(gcf, fullfile(pwd, 'Immagini_3', 'sigma_R3_d3.jpg'));
+
 
 
